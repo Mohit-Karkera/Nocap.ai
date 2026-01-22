@@ -1,12 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import PopupApp from './PopupApp.tsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <div className="w-[380px] h-[560px] overflow-y-auto bg-slate-50">
-      <App />
-    </div>
+    <PopupApp />
   </React.StrictMode>
 );
