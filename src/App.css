@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* Root */
+.app-root {
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 48px;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.agent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.logout {
+  border: 1px solid #e2e8f0;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  margin-top: 80px;
+}
+
+.hero h1 {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hero h1 span {
+  color: #6366f1;
+}
+
+.subtitle {
+  margin-top: 16px;
+  font-size: 18px;
+  color: #64748b;
+}
+
+/* Search Card */
+.search-card {
+  margin: 48px auto 0;
+  width: 700px;
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab.active {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+/* Search row */
+.search-row {
+  display: flex;
+  gap: 12px;
+}
+
+.search-row input {
+  flex: 1;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  font-size: 16px;
+}
+
+.verify-btn {
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 0 28px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
