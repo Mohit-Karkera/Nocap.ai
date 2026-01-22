@@ -44,33 +44,57 @@ export const geminiService = {
 
     const prompt = `Source URL: ${url}\n\nText to analyze:\n${input}\n\nIMPORTANT: If this text appears to be news or makes factual claims that could be misinformation, please perform a real-time search to verify its credibility against recent and credible sources.${promptContext}`;
 
-    const res = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + API_KEY,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: "Current Date: " + new Date().toISOString() + "\n" + SYSTEM_PROMPT + '\nInput:\n' + prompt }] }],
-          generationConfig: { response_mime_type: 'application/json' }
-        })
-      }
-    );
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-    if (!res.ok) {
-      throw new Error(`Gemini error ${res.status}`);
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const res = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + API_KEY,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: "Current Date: " + new Date().toISOString() + "\n" + SYSTEM_PROMPT + '\nInput:\n' + prompt }] }],
+              generationConfig: { response_mime_type: 'application/json' }
+            })
+          }
+        );
+
+        if (res.status === 429) {
+          // Rate limited - wait and retry
+          const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.log(`Rate limited. Waiting ${waitTime / 1000}s before retry ${attempt + 1}/${maxRetries}...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        if (!res.ok) {
+          throw new Error(`Gemini error ${res.status}`);
+        }
+
+        const data = await res.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const parsed = JSON.parse(raw);
+
+        return {
+          originalContent: input,
+          score: parsed.credibility_score,
+          risk_level: parsed.risk_level,
+          signals: parsed.signals,
+          reasoning: parsed.summary_reasoning,
+          timestamp: new Date().toISOString(),
+        } as NewsAnalysisResult;
+
+      } catch (err: any) {
+        lastError = err;
+        if (attempt < maxRetries - 1) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+      }
     }
 
-    const data = await res.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    const parsed = JSON.parse(raw);
-
-    return {
-      originalContent: input,
-      score: parsed.credibility_score,
-      risk_level: parsed.risk_level,
-      signals: parsed.signals,
-      reasoning: parsed.summary_reasoning,
-      timestamp: new Date().toISOString(),
-    } as NewsAnalysisResult;
+    throw lastError || new Error('Failed after retries');
   }
 };
