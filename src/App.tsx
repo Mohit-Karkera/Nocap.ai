@@ -21,6 +21,30 @@ const App: React.FC = () => {
   const [result, setResult] = useState<NewsAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<NewsAnalysisResult[]>([]);
+  const [showManualVerify, setShowManualVerify] = useState(false);
+
+  // Handle extension data
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const dataParam = params.get('data');
+    if (dataParam) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(dataParam));
+        setResult({
+          originalContent: decoded.url || 'Analyzed from extension',
+          score: decoded.score,
+          risk_level: decoded.risk_level,
+          signals: decoded.signals,
+          reasoning: decoded.reasoning,
+          timestamp: new Date().toISOString()
+        });
+        // Scroll to result or just ensure it's visible
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch (e) {
+        console.error("Failed to parse extension data", e);
+      }
+    }
+  }, []);
 
   // Persistence
   useEffect(() => {
@@ -73,8 +97,9 @@ const App: React.FC = () => {
       }
 
       // 2. Run Gemini Analysis with BERT context
-      const data = await geminiService.analyzeNews(inputValue, bertResults);
-      
+      const isUrl = activeTab === AnalysisType.URL;
+      const data = await geminiService.analyzeNews(inputValue, isUrl ? inputValue : '', bertResults);
+
       setResult(data);
       const newHistory = [data, ...history].slice(0, 15);
       setHistory(newHistory);
@@ -82,10 +107,10 @@ const App: React.FC = () => {
         localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(newHistory));
       }
     } catch (err: any) {
-  console.error("FULL ERROR:", err);
-  setError(err?.message || "Something broke badly");
-}
- finally {
+      console.error("FULL ERROR:", err);
+      setError(err?.message || "Something broke badly");
+    }
+    finally {
       setIsAnalyzing(false);
     }
   };
@@ -115,20 +140,20 @@ const App: React.FC = () => {
       {/* Navigation Bar */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setResult(null)}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setResult(null); setShowManualVerify(false); }}>
             <div className="bg-slate-900 p-2 rounded-xl shadow-lg transition-transform active:scale-95">
               <Quote className="w-5 h-5 text-indigo-400 fill-indigo-400" />
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tighter select-none">NoCap<span className="text-indigo-600">.ai</span></h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end hidden sm:flex">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Agent</span>
               <span className="text-xs font-bold text-slate-900">{user.username}</span>
             </div>
             <div className="h-8 w-px bg-slate-100 hidden sm:block"></div>
-            <button 
+            <button
               onClick={handleLogout}
               className="p-2.5 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all border border-transparent hover:border-rose-100"
               title="Logout"
@@ -155,68 +180,98 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Input Panel */}
-        <div className="bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-indigo-100 border border-slate-100 transition-all hover:shadow-indigo-200/50">
-          <div className="flex p-1.5 bg-slate-50 rounded-[1.8rem] mb-3">
-            <button 
-              onClick={() => setActiveTab(AnalysisType.URL)}
-              className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${
-                activeTab === AnalysisType.URL ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-              }`}
+        {/* Results Area */}
+        {result && !isAnalyzing && (
+          <div className="relative space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Analysis Report</h3>
+              <button
+                onClick={() => { setResult(null); setInputValue(''); }}
+                className="text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest"
+              >
+                New Scan
+              </button>
+            </div>
+            <AnalysisResult result={result} />
+          </div>
+        )}
+
+        {/* Verify Manually Button */}
+        {!isAnalyzing && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowManualVerify(!showManualVerify)}
+              className="flex items-center gap-3 px-8 py-4 bg-white border border-slate-200 rounded-[1.5rem] text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all uppercase tracking-[0.2em] shadow-sm active:scale-95"
             >
-              <Search className="w-4 h-4" /> Analyze Link
-            </button>
-            <button 
-              onClick={() => setActiveTab(AnalysisType.TEXT)}
-              className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${
-                activeTab === AnalysisType.TEXT ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              <FileText className="w-4 h-4" /> Paste Claim
+              <Search className="w-4 h-4 text-indigo-600" />
+              {showManualVerify ? 'Close Manual Tools' : 'Verify Manually'}
+              {showManualVerify ? <X className="w-4 h-4" /> : <ChevronRight className="w-4 h-4 text-slate-300" />}
             </button>
           </div>
+        )}
 
-          <form onSubmit={handleAnalyze} className="relative group">
-            {activeTab === AnalysisType.URL ? (
-              <div className="relative">
-                <input 
-                  type="url"
-                  placeholder="Paste news article URL here..."
-                  className="w-full pl-8 pr-36 py-6 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none text-xl font-bold"
+        {/* Input Panel */}
+        {showManualVerify && (
+          <div className="bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-indigo-100 border border-slate-100 transition-all hover:shadow-indigo-200/50 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex p-1.5 bg-slate-50 rounded-[1.8rem] mb-3">
+              <button
+                onClick={() => setActiveTab(AnalysisType.URL)}
+                className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${activeTab === AnalysisType.URL ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+              >
+                <Search className="w-4 h-4" /> Analyze Link
+              </button>
+              <button
+                onClick={() => setActiveTab(AnalysisType.TEXT)}
+                className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${activeTab === AnalysisType.TEXT ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+              >
+                <FileText className="w-4 h-4" /> Paste Claim
+              </button>
+            </div>
+
+            <form onSubmit={handleAnalyze} className="relative group">
+              {activeTab === AnalysisType.URL ? (
+                <div className="relative">
+                  <input
+                    type="url"
+                    placeholder="Paste news article URL here..."
+                    className="w-full pl-8 pr-36 py-6 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none text-xl font-bold"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    required
+                  />
+                </div>
+              ) : (
+                <textarea
+                  placeholder="Paste the statement or article snippet..."
+                  className="w-full p-8 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none min-h-[160px] resize-none text-xl font-bold"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   required
                 />
-              </div>
-            ) : (
-              <textarea 
-                placeholder="Paste the statement or article snippet..."
-                className="w-full p-8 bg-transparent text-slate-900 placeholder-slate-400 focus:outline-none min-h-[160px] resize-none text-xl font-bold"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                required
-              />
-            )}
-            
-            <button 
-              type="submit"
-              disabled={isAnalyzing}
-              className={`absolute right-4 bottom-4 sm:top-1/2 sm:-translate-y-1/2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 group ${isAnalyzing ? 'cursor-not-allowed' : ''}`}
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Scanning</span>
-                </>
-              ) : (
-                <>
-                  <span>Verify</span>
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </>
               )}
-            </button>
-          </form>
-        </div>
+
+              <button
+                type="submit"
+                disabled={isAnalyzing}
+                className={`absolute right-4 bottom-4 sm:top-1/2 sm:-translate-y-1/2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 group ${isAnalyzing ? 'cursor-not-allowed' : ''}`}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Scanning</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Verify</span>
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Results Area */}
         <div className="space-y-12">
@@ -242,20 +297,7 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {result && !isAnalyzing && (
-            <div className="relative">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Analysis Report</h3>
-                <button 
-                  onClick={() => {setResult(null); setInputValue('');}}
-                  className="text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest"
-                >
-                  New Scan
-                </button>
-              </div>
-              <AnalysisResult result={result} />
-            </div>
-          )}
+
 
           {!result && !isAnalyzing && (
             <div className="space-y-8">
@@ -265,7 +307,7 @@ const App: React.FC = () => {
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <History className="w-4 h-4" /> Recent Analyses Vault
                     </h3>
-                    <button 
+                    <button
                       onClick={clearHistory}
                       className="text-[10px] font-black text-rose-400 hover:text-rose-600 transition-colors uppercase tracking-widest flex items-center gap-1.5"
                     >
@@ -274,23 +316,21 @@ const App: React.FC = () => {
                   </div>
                   <div className="grid gap-4">
                     {history.map((h, i) => (
-                      <div 
+                      <div
                         key={i}
                         className="group relative flex items-stretch p-0 bg-white border border-slate-100 rounded-[2rem] hover:border-indigo-200 transition-all text-left shadow-sm hover:shadow-indigo-100 overflow-hidden cursor-pointer"
                         onClick={() => setResult(h)}
                       >
-                        <div className={`w-2 ${
-                          h.score >= 80 ? 'bg-emerald-500' :
+                        <div className={`w-2 ${h.score >= 80 ? 'bg-emerald-500' :
                           h.score >= 50 ? 'bg-amber-500' :
-                          'bg-rose-500'
-                        }`}></div>
+                            'bg-rose-500'
+                          }`}></div>
 
                         <div className="flex-1 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                           <div className="space-y-2 flex-1 min-w-0">
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-lg ${
-                                h.originalContent.startsWith('http') ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'
-                              }`}>
+                              <div className={`p-1.5 rounded-lg ${h.originalContent.startsWith('http') ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'
+                                }`}>
                                 {h.originalContent.startsWith('http') ? <Search className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
                               </div>
                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -305,18 +345,17 @@ const App: React.FC = () => {
 
                           <div className="flex items-center gap-4 flex-shrink-0">
                             <div className="text-right">
-                              <div className={`text-xl font-black tracking-tighter ${
-                                h.score >= 80 ? 'text-emerald-600' :
+                              <div className={`text-xl font-black tracking-tighter ${h.score >= 80 ? 'text-emerald-600' :
                                 h.score >= 50 ? 'text-amber-600' :
-                                'text-rose-600'
-                              }`}>
+                                  'text-rose-600'
+                                }`}>
                                 {h.score}%
                               </div>
                               <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest">CREDIBILITY</div>
                             </div>
-                            
+
                             <div className="flex flex-col gap-1">
-                               <button 
+                              <button
                                 onClick={(e) => deleteHistoryItem(e, i)}
                                 className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                 title="Delete entry"

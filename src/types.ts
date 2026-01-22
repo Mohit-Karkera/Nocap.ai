@@ -1,17 +1,18 @@
-export enum AnalysisType {
-  URL = 'url',
-  TEXT = 'text',
-}
-
 export interface NewsAnalysisResult {
   originalContent: string;
   score: number;
-  verdict: string;
+  risk_level: string;
+  signals: string[];
   reasoning: string;
   timestamp: string;
 }
 
+export enum AnalysisType {
+  URL = 'url',
+  TEXT = 'text'
+}
+
 export interface User {
-  id: string;
   username: string;
+  id: string;
 }
