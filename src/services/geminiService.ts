@@ -51,7 +51,6 @@ export const geminiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: "Current Date: " + new Date().toISOString() + "\n" + SYSTEM_PROMPT + '\nInput:\n' + prompt }] }],
-          tools: [{ google_search: {} }],
           generationConfig: { response_mime_type: 'application/json' }
         })
       }
