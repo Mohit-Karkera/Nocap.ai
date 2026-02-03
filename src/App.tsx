@@ -25,39 +25,37 @@ const App: React.FC = () => {
   const [showManualVerify, setShowManualVerify] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Deep Scrutiny in Progress');
 
-  // Handle extension data and save to vault
+  // Handle incoming data from extension (run only once on mount)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const dataParam = params.get('data');
+
     if (dataParam) {
       try {
         const decoded = JSON.parse(decodeURIComponent(dataParam));
+
+        // Use provided URL or fallback to the text content if available, otherwise generic message
+        let contentDisplay = decoded.url;
+        if (!contentDisplay && decoded.originalContent) {
+          contentDisplay = decoded.originalContent;
+        }
+        if (!contentDisplay) {
+          contentDisplay = 'Analyzed from extension';
+        }
+
         const extensionResult: NewsAnalysisResult = {
-          originalContent: decoded.url || 'Analyzed from extension',
+          originalContent: contentDisplay,
           score: decoded.score,
           risk_level: decoded.risk_level,
           signals: decoded.signals,
           reasoning: decoded.reasoning,
+          sources: decoded.sources || [],
           timestamp: decoded.timestamp || new Date().toISOString()
         };
+
         setResult(extensionResult);
 
-        // Save to vault history if user is logged in
-        if (user) {
-          const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
-          const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
-
-          // Check if this result is already in history (avoid duplicates)
-          const isDuplicate = currentHistory.some((h: NewsAnalysisResult) =>
-            h.timestamp === extensionResult.timestamp && h.originalContent === extensionResult.originalContent
-          );
-
-          if (!isDuplicate) {
-            const newHistory = [extensionResult, ...currentHistory].slice(0, 15);
-            setHistory(newHistory);
-            localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(newHistory));
-          }
-        }
+        // We will handle saving to history in a separate effect that watches [result, user]
 
         // Clean up URL
         window.history.replaceState({}, '', window.location.pathname);
@@ -65,37 +63,26 @@ const App: React.FC = () => {
         console.error("Failed to parse extension data", e);
       }
     }
-    const historyParam = params.get('history');
-    if (historyParam) {
-      try {
-        const decodedHistory = JSON.parse(decodeURIComponent(historyParam));
-        if (Array.isArray(decodedHistory) && user) {
-          const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
-          const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+  }, []);
 
-          // Merge and deduplicate
-          const combinedHistory = [...decodedHistory, ...currentHistory];
-          const uniqueHistory = combinedHistory.filter((item, index, self) =>
-            index === self.findIndex((t) => (
-              t.timestamp === item.timestamp && t.originalContent === item.originalContent
-            ))
-          );
+  // Sync result to history when user is available and result changes
+  useEffect(() => {
+    if (user && result) {
+      const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
+      const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
 
-          // Sort by timestamp desc and limit to 50
-          uniqueHistory.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-          const finalHistory = uniqueHistory.slice(0, 50);
+      // Check if this result is already in history (avoid duplicates)
+      const isDuplicate = currentHistory.some((h: NewsAnalysisResult) =>
+        h.timestamp === result.timestamp && h.originalContent === result.originalContent
+      );
 
-          setHistory(finalHistory);
-          localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(finalHistory));
-
-          // Clean up URL
-          window.history.replaceState({}, '', window.location.pathname);
-        }
-      } catch (e) {
-        console.error("Failed to parse history data", e);
+      if (!isDuplicate) {
+        const newHistory = [result, ...currentHistory].slice(0, 50);
+        setHistory(newHistory);
+        localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(newHistory));
       }
     }
-  }, [user]);
+  }, [result, user]);
 
   // Persistence
   useEffect(() => {

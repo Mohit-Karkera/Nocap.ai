@@ -144,6 +144,7 @@ const PopupApp: React.FC = () => {
                 signals: result.signals,
                 reasoning: result.reasoning,
                 url: result.originalContent.startsWith('http') ? result.originalContent : '',
+                originalContent: result.originalContent, // Pass the full text too so dashboard can display it
                 timestamp: result.timestamp // Include timestamp for vault history
             };
 

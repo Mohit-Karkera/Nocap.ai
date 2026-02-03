@@ -2,7 +2,7 @@
 const API_KEY = "AIzaSyCyEup-uEZmSeNpROB3bIj3XCt0KcGgnAw";
 
 async function testConnection() {
-    const model = "gemini-2.5-flash"; // User suggestion
+    const model = "gemini-1.5-flash"; // User suggestion
     console.log(`Testing Gemini Connection with ${model}...`);
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
