@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "News Credibility Checker",
+  "version": "1.0",
+  "description": "Checks credibility of news using Gemini AI",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*",
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
