@@ -458,9 +458,20 @@ const App: React.FC = () => {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-100 py-16 px-4">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="flex items-center gap-2">
-            <Quote className="w-4 h-4 text-slate-300" />
-            <span className="text-lg font-black tracking-tighter text-slate-400">NoCap</span>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Quote className="w-4 h-4 text-slate-300" />
+              <span className="text-lg font-black tracking-tighter text-slate-400">NoCap</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest ">Developed By</span>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[10px] text-slate-400 font-medium">
+                <a href="mailto:mohitdkarkera@gmail.com" className="hover:text-indigo-500 transition-colors">Mohit D Karkera</a>
+                <a href="mailto:mayankjoshi@gmail.com" className="hover:text-indigo-500 transition-colors">Mayank Joshi</a>
+                <a href="mailto:nischalsg@gmail.com" className="hover:text-indigo-500 transition-colors">Nischal S G</a>
+                <a href="mailto:monishasharma@gmail.com" className="hover:text-indigo-500 transition-colors">Monisha Sharma</a>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
