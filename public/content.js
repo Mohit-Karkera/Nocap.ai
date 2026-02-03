@@ -95,12 +95,167 @@ function scrapeContent() {
     return content;
 }
 
+// Selection Tool Variables
+let selectionOverlay = null;
+let selectionBox = null;
+let startX = 0, startY = 0;
+let isSelecting = false;
+
+function startSelection() {
+    // Create overlay
+    selectionOverlay = document.createElement('div');
+    selectionOverlay.id = 'nocap-selection-overlay';
+    selectionOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 2147483647;
+        cursor: crosshair;
+    `;
+
+    // Create selection box
+    selectionBox = document.createElement('div');
+    selectionBox.id = 'nocap-selection-box';
+    selectionBox.style.cssText = `
+        position: fixed;
+        border: 2px dashed #6366f1;
+        background: rgba(99, 102, 241, 0.1);
+        z-index: 2147483648;
+        pointer-events: none;
+        display: none;
+    `;
+
+    document.body.appendChild(selectionOverlay);
+    document.body.appendChild(selectionBox);
+
+    // Event handlers
+    selectionOverlay.addEventListener('mousedown', handleMouseDown);
+    selectionOverlay.addEventListener('mousemove', handleMouseMove);
+    selectionOverlay.addEventListener('mouseup', handleMouseUp);
+}
+
+function handleMouseDown(e) {
+    isSelecting = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    selectionBox.style.left = startX + 'px';
+    selectionBox.style.top = startY + 'px';
+    selectionBox.style.width = '0px';
+    selectionBox.style.height = '0px';
+    selectionBox.style.display = 'block';
+}
+
+function handleMouseMove(e) {
+    if (!isSelecting) return;
+
+    const currentX = e.clientX;
+    const currentY = e.clientY;
+
+    const width = Math.abs(currentX - startX);
+    const height = Math.abs(currentY - startY);
+    const left = Math.min(currentX, startX);
+    const top = Math.min(currentY, startY);
+
+    selectionBox.style.left = left + 'px';
+    selectionBox.style.top = top + 'px';
+    selectionBox.style.width = width + 'px';
+    selectionBox.style.height = height + 'px';
+}
+
+function handleMouseUp(e) {
+    if (!isSelecting) return;
+    isSelecting = false;
+
+    const rect = selectionBox.getBoundingClientRect();
+    
+    // Extract text within the selection
+    const selectedText = extractTextFromRect(rect);
+
+    // Clean up overlay
+    if (selectionOverlay) selectionOverlay.remove();
+    if (selectionBox) selectionBox.remove();
+
+    // Show toast notification
+    showToast('Selection captured! Re-open extension to analyze.');
+
+    // Store the selected text
+    chrome.storage.local.set({ pending_selection: selectedText });
+}
+
+function extractTextFromRect(rect) {
+    const elements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, li, a, div');
+    let selectedText = '';
+
+    elements.forEach(el => {
+        const elRect = el.getBoundingClientRect();
+        
+        // Check if element is within selection bounds
+        if (
+            elRect.left >= rect.left &&
+            elRect.right <= rect.right &&
+            elRect.top >= rect.top &&
+            elRect.bottom <= rect.bottom
+        ) {
+            const text = el.innerText?.trim();
+            if (text && text.length > 10) {
+                selectedText += text + '\n\n';
+            }
+        }
+    });
+
+    return selectedText.trim() || 'No text found in selection';
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e293b;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-weight: 600;
+        font-size: 14px;
+        z-index: 2147483649;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+    toast.textContent = message;
+
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'scrape') {
         const text = scrapeContent();
         const title = document.title;
         sendResponse({ text, url: window.location.href, title });
+    } else if (request.action === 'start-selection') {
+        startSelection();
+        sendResponse({ success: true });
     }
     return true;
 });

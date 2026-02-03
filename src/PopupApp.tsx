@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ShieldCheck,
     ShieldAlert,
@@ -6,7 +6,9 @@ import {
     ExternalLink,
     Info,
     AlertTriangle,
-    CheckCircle2
+    CheckCircle2,
+    MousePointer2,
+    LayoutDashboard
 } from 'lucide-react';
 import { geminiService } from './services/geminiService';
 import { NewsAnalysisResult } from './types';
@@ -15,6 +17,51 @@ const PopupApp: React.FC = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<NewsAnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [user, setUser] = useState<{ username: string; id: string } | null>(null);
+
+    // Load user from localStorage
+    useEffect(() => {
+        const savedUser = localStorage.getItem('nocap_user');
+        if (savedUser) {
+            setUser(JSON.parse(savedUser));
+        }
+    }, []);
+
+    // Check for pending selection on mount
+    useEffect(() => {
+        chrome.storage.local.get(['pending_selection'], (result) => {
+            if (result.pending_selection && typeof result.pending_selection === 'string') {
+                // Auto-analyze the selection
+                analyzeSelection(result.pending_selection);
+                // Clear the pending selection
+                chrome.storage.local.remove('pending_selection');
+            }
+        });
+    }, []);
+
+    const analyzeSelection = async (text: string) => {
+        setIsAnalyzing(true);
+        setError(null);
+        setResult(null);
+
+        try {
+            const data = await geminiService.analyzeNews(text, '');
+            setResult(data);
+
+            // Save to vault history if user is logged in
+            if (user) {
+                const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
+                const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+                const newHistory = [data, ...currentHistory].slice(0, 15);
+                localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(newHistory));
+            }
+        } catch (err: any) {
+            console.error("Selection Analysis Error:", err);
+            setError(err?.message || "Failed to analyze selection.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
 
     const handleVerify = async () => {
         setIsAnalyzing(true);
@@ -34,6 +81,14 @@ const PopupApp: React.FC = () => {
 
             const data = await geminiService.analyzeNews(response.text, response.url);
             setResult(data);
+
+            // Save to vault history if user is logged in
+            if (user) {
+                const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
+                const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+                const newHistory = [data, ...currentHistory].slice(0, 15);
+                localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(newHistory));
+            }
         } catch (err: any) {
             console.error("Popup Error:", err);
             if (err?.message?.includes('Could not establish connection')) {
@@ -46,22 +101,54 @@ const PopupApp: React.FC = () => {
         }
     };
 
+    const handleStartSelection = async () => {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab.id) throw new Error("No active tab found");
+
+            await chrome.tabs.sendMessage(tab.id, { action: 'start-selection' });
+            window.close(); // Close popup so user can see the page
+        } catch (err: any) {
+            console.error("Selection Error:", err);
+            setError("Failed to start selection. Please refresh the page and try again.");
+        }
+    };
+
+    const openDashboard = () => {
+        if (!user) {
+            window.open('http://localhost:5173', '_blank');
+            return;
+        }
+
+        const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
+        let params = '';
+
+        if (savedHistory) {
+            try {
+                // Determine what to pass - for now pass everything but maybe limit size if needed
+                params = `?history=${encodeURIComponent(savedHistory)}`;
+            } catch (e) {
+                console.error("Failed to encode history", e);
+            }
+        }
+
+        window.open(`http://localhost:5173${params}`, '_blank');
+    };
+
     const openWebsite = () => {
         if (result) {
-            // We'll use a unique key to store the data in localStorage for the website to pick up
+            // Pass complete result data to the website
             const dataToPass = {
                 score: result.score,
                 risk_level: result.risk_level,
                 signals: result.signals,
                 reasoning: result.reasoning,
-                url: result.originalContent.startsWith('http') ? result.originalContent : ''
+                url: result.originalContent.startsWith('http') ? result.originalContent : '',
+                timestamp: result.timestamp // Include timestamp for vault history
             };
 
             const encodedData = encodeURIComponent(JSON.stringify(dataToPass));
             const websiteUrl = `http://localhost:5173/?data=${encodedData}`;
-            // In production, this would be the actual domain. 
-            // The user mentioned "opens the website in a new tab".
-            // I'll assume it's running on localhost:5173 for now or whatever vite uses.
             window.open(websiteUrl, '_blank');
         }
     };
@@ -104,6 +191,22 @@ const PopupApp: React.FC = () => {
                     >
                         Verify Credibility
                     </button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={handleStartSelection}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                            <MousePointer2 className="w-4 h-4" />
+                            Scan Area
+                        </button>
+                        <button
+                            onClick={openDashboard}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                            <LayoutDashboard className="w-4 h-4" />
+                            Dashboard
+                        </button>
+                    </div>
                 </div>
             )}
 

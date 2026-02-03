@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { geminiService } from './services/geminiService';
 import { huggingFaceService } from './services/huggingFaceService';
+import { urlScraperService } from './services/urlScraperService';
 import { NewsAnalysisResult, AnalysisType, User } from './types';
 import AnalysisResult from './components/AnalysisResult';
 import Auth from './components/Auth';
@@ -22,29 +23,79 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<NewsAnalysisResult[]>([]);
   const [showManualVerify, setShowManualVerify] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Deep Scrutiny in Progress');
 
-  // Handle extension data
+  // Handle extension data and save to vault
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const dataParam = params.get('data');
     if (dataParam) {
       try {
         const decoded = JSON.parse(decodeURIComponent(dataParam));
-        setResult({
+        const extensionResult: NewsAnalysisResult = {
           originalContent: decoded.url || 'Analyzed from extension',
           score: decoded.score,
           risk_level: decoded.risk_level,
           signals: decoded.signals,
           reasoning: decoded.reasoning,
-          timestamp: new Date().toISOString()
-        });
-        // Scroll to result or just ensure it's visible
+          timestamp: decoded.timestamp || new Date().toISOString()
+        };
+        setResult(extensionResult);
+
+        // Save to vault history if user is logged in
+        if (user) {
+          const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
+          const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+
+          // Check if this result is already in history (avoid duplicates)
+          const isDuplicate = currentHistory.some((h: NewsAnalysisResult) =>
+            h.timestamp === extensionResult.timestamp && h.originalContent === extensionResult.originalContent
+          );
+
+          if (!isDuplicate) {
+            const newHistory = [extensionResult, ...currentHistory].slice(0, 15);
+            setHistory(newHistory);
+            localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(newHistory));
+          }
+        }
+
+        // Clean up URL
         window.history.replaceState({}, '', window.location.pathname);
       } catch (e) {
         console.error("Failed to parse extension data", e);
       }
     }
-  }, []);
+    const historyParam = params.get('history');
+    if (historyParam) {
+      try {
+        const decodedHistory = JSON.parse(decodeURIComponent(historyParam));
+        if (Array.isArray(decodedHistory) && user) {
+          const savedHistory = localStorage.getItem(`nocap_history_${user.username}`);
+          const currentHistory = savedHistory ? JSON.parse(savedHistory) : [];
+
+          // Merge and deduplicate
+          const combinedHistory = [...decodedHistory, ...currentHistory];
+          const uniqueHistory = combinedHistory.filter((item, index, self) =>
+            index === self.findIndex((t) => (
+              t.timestamp === item.timestamp && t.originalContent === item.originalContent
+            ))
+          );
+
+          // Sort by timestamp desc and limit to 50
+          uniqueHistory.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          const finalHistory = uniqueHistory.slice(0, 50);
+
+          setHistory(finalHistory);
+          localStorage.setItem(`nocap_history_${user.username}`, JSON.stringify(finalHistory));
+
+          // Clean up URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      } catch (e) {
+        console.error("Failed to parse history data", e);
+      }
+    }
+  }, [user]);
 
   // Persistence
   useEffect(() => {
@@ -85,20 +136,37 @@ const App: React.FC = () => {
     setIsAnalyzing(true);
     setError(null);
     setResult(null);
+    setLoadingMessage('Deep Scrutiny in Progress');
 
     try {
-      // 1. Run BERT Analysis (Parallelizable, but here we wait to feed it to Gemini)
-      // We catch errors here so one failure doesn't stop the whole process (optional strategy)
+      let contentToAnalyze = inputValue;
+      let urlForContext = '';
+
+      // If analyzing a URL, scrape the content first
+      if (activeTab === AnalysisType.URL) {
+        setLoadingMessage('Fetching article content...');
+        try {
+          const scrapedData = await urlScraperService.scrapeURL(inputValue);
+          contentToAnalyze = scrapedData.title + '\n\n' + scrapedData.text;
+          urlForContext = scrapedData.url;
+        } catch (scrapeErr: any) {
+          console.error("URL Scraping failed:", scrapeErr);
+          throw new Error(`Unable to fetch article content. ${scrapeErr.message}`);
+        }
+      }
+
+      // Run BERT Analysis
+      setLoadingMessage('Running AI credibility checks...');
       let bertResults: any[] = [];
       try {
-        bertResults = await huggingFaceService.analyzeWithBert(inputValue);
+        bertResults = await huggingFaceService.analyzeWithBert(contentToAnalyze);
       } catch (bertErr) {
         console.error("BERT Analysis failed, proceeding with just Gemini:", bertErr);
       }
 
-      // 2. Run Gemini Analysis with BERT context
-      const isUrl = activeTab === AnalysisType.URL;
-      const data = await geminiService.analyzeNews(inputValue, isUrl ? inputValue : '', bertResults);
+      // Run Gemini Analysis with BERT context
+      setLoadingMessage('Cross-referencing with trusted sources...');
+      const data = await geminiService.analyzeNews(contentToAnalyze, urlForContext, bertResults);
 
       setResult(data);
       const newHistory = [data, ...history].slice(0, 15);
@@ -112,6 +180,7 @@ const App: React.FC = () => {
     }
     finally {
       setIsAnalyzing(false);
+      setLoadingMessage('Deep Scrutiny in Progress');
     }
   };
 
@@ -291,8 +360,8 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="text-center space-y-3">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Deep Scrutiny in Progress</h3>
-                <p className="text-slate-400 font-medium max-w-xs mx-auto">Cross-referencing claims with trusted news databases and live Google data...</p>
+                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{loadingMessage}</h3>
+                <p className="text-slate-400 font-medium max-w-xs mx-auto">Analyzing content using AI-powered credibility signals...</p>
               </div>
             </div>
           )}

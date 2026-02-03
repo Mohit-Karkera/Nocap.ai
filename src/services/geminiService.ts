@@ -4,42 +4,42 @@ import { BertAnalysisResult } from './huggingFaceService';
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const SYSTEM_PROMPT = `
-You are a credibility assessment assistant.
+You are the Meta-Reviewer for a Hybrid Misinformation Detection System.
 
-You do NOT verify facts.
-You do NOT claim truth or falsehood.
-You evaluate whether the given text shows characteristics commonly associated with misinformation.
+Your goal is to synthesize two signals into a final credibility assessment:
+1. Signal A: Statistical Logic (BERT Classifier) - scans for patterns typical of fake news.
+2. Signal B: Semantic Logic (Your Analysis) - scans for logical fallacies, emotional manipulation, and factual inconsistencies.
 
-Analyze based on:
-- Writing tone
-- Emotional manipulation
-- Evidence and sourcing
-- Logical consistency
-- Sensationalism
+PROTOCOL:
+- If Signal A is High Confidence (>85%) and matches your analysis -> significantly boost confidence.
+- If signals DISAGREE -> verify strictly against logic and facts. Explicitly mention the disagreement in the reasoning (e.g. "Classifier flagged this, but content is satire...").
 
-The source URL is provided only as contextual metadata.
-
-Respond ONLY in valid JSON using this schema:
-
+Respond ONLY in valid JSON:
 {
   "credibility_score": number (0-100),
   "risk_level": "Low" | "Medium" | "High",
-  "signals": [string, string, ...],
-  "summary_reasoning": string
+  "signals": [string],
+  "summary_reasoning": string (MUST mention "Hybrid analysis" or "Ensemble verdict"),
+  "sources": [{ "title": string, "url": string }] (List 1-3 trusted authorities or the source URL itself if valid)
 }
-
-Do not include markdown.
-Do not include explanations outside JSON.
 `;
 
 export const geminiService = {
   async analyzeNews(input: string, url: string = '', bertResults?: BertAnalysisResult[]): Promise<NewsAnalysisResult> {
+    if (!API_KEY) {
+      console.error("Gemini API Key is missing. Check .env.local");
+      throw new Error("Configuration Error: Gemini API Key is missing.");
+    }
+
     let promptContext = "";
 
     // Add BERT context if available
     if (bertResults && bertResults.length > 0) {
-      const formattedBert = bertResults.map(b => `${b.label}: ${(b.score * 100).toFixed(2)}%`).join(", ");
-      promptContext = `\n[ADDITIONAL CONTEXT FROM BERT FAKE NEWS DETECTOR]\nThe following are confidence scores from a specialized BERT model designed to detect fake news. Use this as a signal, but prioritize your own logical reasoning and knowledge base. If the BERT model indicates high probability of "Fake" or "Real", consider it in your final verdict.\nBERT SCORES: ${formattedBert}\n`;
+      // Find the highest confidence score
+      const topResult = bertResults.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+      const confidence = (topResult.score * 100).toFixed(1);
+
+      promptContext = `\n[SIGNAL A: STATISTICAL CLASSIFIER REPORT]\nModel: BERT-Fake-News-Detector\nVerdict: ${topResult.label}\nConfidence: ${confidence}%\n\nINSTRUCTION: Incorporate this statistical signal into your final hybrid verdict. If confidence is high (>90%), give it significant weight.\n`;
     }
 
     const prompt = `Source URL: ${url}\n\nText to analyze:\n${input}\n\nIMPORTANT: If this text appears to be news or makes factual claims that could be misinformation, please perform a real-time search to verify its credibility against recent and credible sources.${promptContext}`;
@@ -74,20 +74,35 @@ export const geminiService = {
         }
 
         const data = await res.json();
-        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        const parsed = JSON.parse(raw);
+        let raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        return {
-          originalContent: input,
-          score: parsed.credibility_score,
-          risk_level: parsed.risk_level,
-          signals: parsed.signals,
-          reasoning: parsed.summary_reasoning,
-          timestamp: new Date().toISOString(),
-        } as NewsAnalysisResult;
+        if (!raw) {
+          throw new Error("Empty response from Gemini");
+        }
+
+        // SANITIZATION: Remove markdown code blocks if present
+        raw = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+
+        try {
+          const parsed = JSON.parse(raw);
+
+          return {
+            originalContent: input,
+            score: parsed.credibility_score,
+            risk_level: parsed.risk_level,
+            signals: parsed.signals,
+            reasoning: parsed.summary_reasoning,
+            sources: parsed.sources || [],
+            timestamp: new Date().toISOString(),
+          } as NewsAnalysisResult;
+        } catch (parseErr) {
+          console.error("Failed to parse JSON from Gemini:", raw);
+          throw new Error("Invalid format received from AI analysis. Please try again.");
+        }
 
       } catch (err: any) {
         lastError = err;
+        console.error(`Attempt ${attempt + 1} failed:`, err);
         if (attempt < maxRetries - 1) {
           const waitTime = Math.pow(2, attempt) * 1000;
           await new Promise(resolve => setTimeout(resolve, waitTime));

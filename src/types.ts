@@ -4,6 +4,7 @@ export interface NewsAnalysisResult {
   risk_level: string;
   signals: string[];
   reasoning: string;
+  sources?: { title: string; url: string }[];
   timestamp: string;
 }
 

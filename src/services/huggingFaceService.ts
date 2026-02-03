@@ -15,19 +15,35 @@ export const huggingFaceService = {
     }
 
     try {
-      const response = await fetch(
-        `https://api-inference.huggingface.co/models/${MODEL_ID}`,
-        {
-          headers: {
-            Authorization: `Bearer ${HF_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({ inputs: text }),
+      const fetchWithRetry = async (retries = 1, delay = 2000): Promise<Response> => {
+        const res = await fetch(
+          `https://api-inference.huggingface.co/models/${MODEL_ID}`,
+          {
+            headers: {
+              Authorization: `Bearer ${HF_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify({ inputs: text }),
+          }
+        );
+
+        if (res.status === 503 && retries > 0) {
+          console.warn(`Hugging Face model is loading (503). Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchWithRetry(retries - 1, delay);
         }
-      );
+
+        return res;
+      };
+
+      const response = await fetchWithRetry();
 
       if (!response.ok) {
+        if (response.status === 503) {
+          console.warn("Hugging Face model is still loading after retry. Skipping BERT analysis.");
+          return [];
+        }
         throw new Error(`Hugging Face API error: ${response.status} ${response.statusText}`);
       }
 
