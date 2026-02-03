@@ -177,13 +177,13 @@ const PopupApp: React.FC = () => {
                 <div className="bg-slate-900 p-1.5 rounded-lg">
                     <ShieldCheck className="w-5 h-5 text-indigo-400" />
                 </div>
-                <h1 className="text-xl font-black tracking-tight">NoCap<span className="text-indigo-600">.ai</span></h1>
+                <h1 className="text-xl font-black tracking-tight">NoCap</h1>
             </div>
 
             {!result && !isAnalyzing && (
                 <div className="flex flex-col gap-3 py-4">
                     <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                        Verify the credibility of this article using AI-powered signals.
+                        Verify the credibility of this article.
                     </p>
                     <button
                         onClick={handleVerify}

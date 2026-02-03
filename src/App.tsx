@@ -136,7 +136,7 @@ const App: React.FC = () => {
     setIsAnalyzing(true);
     setError(null);
     setResult(null);
-    setLoadingMessage('Deep Scrutiny in Progress');
+    setLoadingMessage('Analysis in Progress');
 
     try {
       let contentToAnalyze = inputValue;
@@ -156,7 +156,7 @@ const App: React.FC = () => {
       }
 
       // Run BERT Analysis
-      setLoadingMessage('Running AI credibility checks...');
+      setLoadingMessage('Verifying credibility signals...');
       let bertResults: any[] = [];
       try {
         bertResults = await huggingFaceService.analyzeWithBert(contentToAnalyze);
@@ -361,7 +361,7 @@ const App: React.FC = () => {
               </div>
               <div className="text-center space-y-3">
                 <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{loadingMessage}</h3>
-                <p className="text-slate-400 font-medium max-w-xs mx-auto">Analyzing content using AI-powered credibility signals...</p>
+                <p className="text-slate-400 font-medium max-w-xs mx-auto">Analyzing content credibility...</p>
               </div>
             </div>
           )}
@@ -460,13 +460,7 @@ const App: React.FC = () => {
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex items-center gap-2">
             <Quote className="w-4 h-4 text-slate-300" />
-            <span className="text-lg font-black tracking-tighter text-slate-400">NoCap<span className="text-slate-300">.ai</span></span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            <a href="#" className="hover:text-indigo-600 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">Terms</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">API Docs</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">Contact</a>
+            <span className="text-lg font-black tracking-tighter text-slate-400">NoCap</span>
           </div>
         </div>
       </footer>
