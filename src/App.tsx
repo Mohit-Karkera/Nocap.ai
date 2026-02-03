@@ -211,14 +211,14 @@ const App: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setResult(null); setShowManualVerify(false); }}>
             <div className="bg-slate-900 p-2 rounded-xl shadow-lg transition-transform active:scale-95">
-              <Quote className="w-5 h-5 text-indigo-400 fill-indigo-400" />
+              <Quote className="w-5 h-5 text-teal-400 fill-teal-400" />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tighter select-none">NoCap<span className="text-indigo-600">.ai</span></h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-normal select-none">NoCap<span className="text-teal-600">.ai</span></h1>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end hidden sm:flex">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Agent</span>
+              <span className="text-[10px] font-bold text-slate-400 ">Active Agent</span>
               <span className="text-xs font-bold text-slate-900">{user.username}</span>
             </div>
             <div className="h-8 w-px bg-slate-100 hidden sm:block"></div>
@@ -237,14 +237,14 @@ const App: React.FC = () => {
         {/* Welcome Back / Hero */}
         {!result && !isAnalyzing && (
           <div className="text-center space-y-5 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full border border-indigo-100 mb-2 uppercase tracking-wide">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-50 text-teal-700 text-xs font-bold rounded-full border border-teal-100 mb-2 ">
               <UserIcon className="w-3 h-3" /> Ready, {user.username}
             </div>
-            <h2 className="text-5xl font-black text-slate-900 tracking-tight leading-[1.1] sm:text-6xl">
-              Truth Detection <br /><span className="text-indigo-600">Reimagined.</span>
+            <h2 className="text-5xl font-bold text-slate-900 tracking-tight leading-[1.1] sm:text-6xl">
+              Truth Detection <br /><span className="text-teal-600">Reimagined.</span>
             </h2>
             <p className="text-slate-500 max-w-xl mx-auto text-lg font-medium leading-relaxed">
-              Scan links, claims, or articles. No bias. No BS. Just the facts.
+              Scan links, claims, or articles. No bias. Just the facts.
             </p>
           </div>
         )}
@@ -253,10 +253,10 @@ const App: React.FC = () => {
         {result && !isAnalyzing && (
           <div className="relative space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Analysis Report</h3>
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Analysis Report</h3>
               <button
                 onClick={() => { setResult(null); setInputValue(''); }}
-                className="text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest"
+                className="text-xs font-bold text-teal-600 hover:text-teal-800 transition-colors "
               >
                 New Scan
               </button>
@@ -270,9 +270,9 @@ const App: React.FC = () => {
           <div className="flex justify-center">
             <button
               onClick={() => setShowManualVerify(!showManualVerify)}
-              className="flex items-center gap-3 px-8 py-4 bg-white border border-slate-200 rounded-[1.5rem] text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all uppercase tracking-[0.2em] shadow-sm active:scale-95"
+              className="flex items-center gap-3 px-8 py-4 bg-white border border-slate-200 rounded-[1.5rem] text-[10px] font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all uppercase tracking-[0.2em] shadow-sm active:scale-95"
             >
-              <Search className="w-4 h-4 text-indigo-600" />
+              <Search className="w-4 h-4 text-teal-600" />
               {showManualVerify ? 'Close Manual Tools' : 'Verify Manually'}
               {showManualVerify ? <X className="w-4 h-4" /> : <ChevronRight className="w-4 h-4 text-slate-300" />}
             </button>
@@ -281,18 +281,18 @@ const App: React.FC = () => {
 
         {/* Input Panel */}
         {showManualVerify && (
-          <div className="bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-indigo-100 border border-slate-100 transition-all hover:shadow-indigo-200/50 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white p-2.5 rounded-[2.5rem] shadow-2xl shadow-teal-100 border border-slate-100 transition-all hover:shadow-teal-200/50 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex p-1.5 bg-slate-50 rounded-[1.8rem] mb-3">
               <button
                 onClick={() => setActiveTab(AnalysisType.URL)}
-                className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${activeTab === AnalysisType.URL ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                className={`flex-1 py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2  ${activeTab === AnalysisType.URL ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                   }`}
               >
                 <Search className="w-4 h-4" /> Analyze Link
               </button>
               <button
                 onClick={() => setActiveTab(AnalysisType.TEXT)}
-                className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${activeTab === AnalysisType.TEXT ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                className={`flex-1 py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2  ${activeTab === AnalysisType.TEXT ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                   }`}
               >
                 <FileText className="w-4 h-4" /> Paste Claim
@@ -324,7 +324,7 @@ const App: React.FC = () => {
               <button
                 type="submit"
                 disabled={isAnalyzing}
-                className={`absolute right-4 bottom-4 sm:top-1/2 sm:-translate-y-1/2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 group ${isAnalyzing ? 'cursor-not-allowed' : ''}`}
+                className={`absolute right-4 bottom-4 sm:top-1/2 sm:-translate-y-1/2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white px-8 py-4 rounded-[1.5rem] font-bold  shadow-xl transition-all flex items-center gap-3 group ${isAnalyzing ? 'cursor-not-allowed' : ''}`}
               >
                 {isAnalyzing ? (
                   <>
@@ -354,13 +354,13 @@ const App: React.FC = () => {
           {isAnalyzing && (
             <div className="flex flex-col items-center justify-center py-24 space-y-8">
               <div className="relative">
-                <div className="w-32 h-32 border-[6px] border-indigo-50 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="w-32 h-32 border-[6px] border-teal-50 border-t-teal-600 rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <ShieldCheck className="w-10 h-10 text-indigo-600 animate-pulse" />
+                  <ShieldCheck className="w-10 h-10 text-teal-600 animate-pulse" />
                 </div>
               </div>
               <div className="text-center space-y-3">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{loadingMessage}</h3>
+                <h3 className="text-2xl font-bold text-slate-900 uppercase tracking-normal">{loadingMessage}</h3>
                 <p className="text-slate-400 font-medium max-w-xs mx-auto">Analyzing content credibility...</p>
               </div>
             </div>
@@ -373,12 +373,12 @@ const App: React.FC = () => {
               {history.length > 0 ? (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                       <History className="w-4 h-4" /> Recent Analyses Vault
                     </h3>
                     <button
                       onClick={clearHistory}
-                      className="text-[10px] font-black text-rose-400 hover:text-rose-600 transition-colors uppercase tracking-widest flex items-center gap-1.5"
+                      className="text-[10px] font-bold text-rose-400 hover:text-rose-600 transition-colors  flex items-center gap-1.5"
                     >
                       <Trash2 className="w-3 h-3" /> Clear Vault
                     </button>
@@ -387,7 +387,7 @@ const App: React.FC = () => {
                     {history.map((h, i) => (
                       <div
                         key={i}
-                        className="group relative flex items-stretch p-0 bg-white border border-slate-100 rounded-[2rem] hover:border-indigo-200 transition-all text-left shadow-sm hover:shadow-indigo-100 overflow-hidden cursor-pointer"
+                        className="group relative flex items-stretch p-0 bg-white border border-slate-100 rounded-[2rem] hover:border-teal-200 transition-all text-left shadow-sm hover:shadow-teal-100 overflow-hidden cursor-pointer"
                         onClick={() => setResult(h)}
                       >
                         <div className={`w-2 ${h.score >= 80 ? 'bg-emerald-500' :
@@ -398,11 +398,11 @@ const App: React.FC = () => {
                         <div className="flex-1 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                           <div className="space-y-2 flex-1 min-w-0">
                             <div className="flex items-center gap-3">
-                              <div className={`p-1.5 rounded-lg ${h.originalContent.startsWith('http') ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'
+                              <div className={`p-1.5 rounded-lg ${h.originalContent.startsWith('http') ? 'bg-teal-50 text-teal-600' : 'bg-slate-100 text-slate-600'
                                 }`}>
                                 {h.originalContent.startsWith('http') ? <Search className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
                               </div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-slate-400  flex items-center gap-1.5">
                                 <Clock className="w-3 h-3" />
                                 {new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(h.timestamp).toLocaleDateString()}
                               </span>
@@ -414,13 +414,13 @@ const App: React.FC = () => {
 
                           <div className="flex items-center gap-4 flex-shrink-0">
                             <div className="text-right">
-                              <div className={`text-xl font-black tracking-tighter ${h.score >= 80 ? 'text-emerald-600' :
+                              <div className={`text-xl font-bold tracking-normal ${h.score >= 80 ? 'text-emerald-600' :
                                 h.score >= 50 ? 'text-amber-600' :
                                   'text-rose-600'
                                 }`}>
                                 {h.score}%
                               </div>
-                              <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest">CREDIBILITY</div>
+                              <div className="text-[9px] font-bold text-slate-300 ">CREDIBILITY</div>
                             </div>
 
                             <div className="flex flex-col gap-1">
@@ -431,7 +431,7 @@ const App: React.FC = () => {
                               >
                                 <X className="w-4 h-4" />
                               </button>
-                              <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                              <ChevronRight className="w-5 h-5 text-slate-200 group-hover:text-teal-600 group-hover:translate-x-1 transition-all" />
                             </div>
                           </div>
                         </div>
@@ -445,7 +445,7 @@ const App: React.FC = () => {
                     <ShieldCheck className="w-12 h-12 text-slate-400" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-black text-slate-600 uppercase tracking-tighter">Your Vault is Empty</h3>
+                    <h3 className="text-xl font-bold text-slate-600 uppercase tracking-normal">Your Vault is Empty</h3>
                     <p className="text-slate-400 font-medium max-w-xs">Drop a link or claim above to begin building your truth database.</p>
                   </div>
                 </div>
@@ -461,15 +461,15 @@ const App: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <Quote className="w-4 h-4 text-slate-300" />
-              <span className="text-lg font-black tracking-tighter text-slate-400">NoCap</span>
+              <span className="text-lg font-bold tracking-normal text-slate-400">NoCap</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest ">Developed By</span>
+              <span className="text-[10px] font-bold text-slate-300  ">Developed By</span>
               <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[10px] text-slate-400 font-medium">
-                <a href="mailto:mohitdkarkera@gmail.com" className="hover:text-indigo-500 transition-colors">Mohit D Karkera</a>
-                <a href="mailto:mayankjoshi@gmail.com" className="hover:text-indigo-500 transition-colors">Mayank Joshi</a>
-                <a href="mailto:nischalsg@gmail.com" className="hover:text-indigo-500 transition-colors">Nischal S G</a>
-                <a href="mailto:monishasharma@gmail.com" className="hover:text-indigo-500 transition-colors">Monisha Sharma</a>
+                <a href="mailto:mohitdkarkera@gmail.com" className="hover:text-teal-500 transition-colors">Mohit D Karkera</a>
+                <a href="mailto:mayankjoshi@gmail.com" className="hover:text-teal-500 transition-colors">Mayank Joshi</a>
+                <a href="mailto:nischalsg@gmail.com" className="hover:text-teal-500 transition-colors">Nischal S G</a>
+                <a href="mailto:monishasharma@gmail.com" className="hover:text-teal-500 transition-colors">Monisha Sharma</a>
               </div>
             </div>
           </div>

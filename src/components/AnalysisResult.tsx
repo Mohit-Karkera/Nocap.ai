@@ -38,15 +38,15 @@ const AnalysisResult: React.FC<Props> = ({ result }) => {
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 transition-colors group"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-teal-50 transition-colors group"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                  <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-700">
+                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400"></div>
+                  <span className="text-xs font-bold text-slate-700 group-hover:text-teal-700">
                     {source.title}
                   </span>
                 </div>
-                {source.url && <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-indigo-400" />}
+                {source.url && <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-teal-400" />}
               </a>
             ))}
           </div>

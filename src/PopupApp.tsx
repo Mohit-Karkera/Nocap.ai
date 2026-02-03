@@ -175,9 +175,9 @@ const PopupApp: React.FC = () => {
         <div className="w-[280px] p-4 flex flex-col gap-4 font-sans antialiased text-slate-900">
             <div className="flex items-center gap-2 mb-2">
                 <div className="bg-slate-900 p-1.5 rounded-lg">
-                    <ShieldCheck className="w-5 h-5 text-indigo-400" />
+                    <ShieldCheck className="w-5 h-5 text-teal-400" />
                 </div>
-                <h1 className="text-xl font-black tracking-tight">NoCap</h1>
+                <h1 className="text-xl font-bold tracking-normal">NoCap</h1>
             </div>
 
             {!result && !isAnalyzing && (
@@ -194,7 +194,7 @@ const PopupApp: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={handleStartSelection}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+                            className="bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
                         >
                             <MousePointer2 className="w-4 h-4" />
                             Scan Area
@@ -212,8 +212,8 @@ const PopupApp: React.FC = () => {
 
             {isAnalyzing && (
                 <div className="flex flex-col items-center justify-center py-8 gap-3">
-                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Analyzing article...</p>
+                    <Loader2 className="w-10 h-10 text-teal-600 animate-spin" />
+                    <p className="text-xs font-bold text-slate-400 ">Analyzing article...</p>
                 </div>
             )}
 
@@ -228,7 +228,7 @@ const PopupApp: React.FC = () => {
                 <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {/* Score Section */}
                     <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-col items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Credibility Score</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Credibility Score</span>
                         <div className="relative flex items-center justify-center w-24 h-24">
                             <svg className="w-full h-full -rotate-90">
                                 <circle
@@ -248,7 +248,7 @@ const PopupApp: React.FC = () => {
                                     strokeLinecap="round"
                                 />
                             </svg>
-                            <span className="absolute text-2xl font-black">{result.score}%</span>
+                            <span className="absolute text-2xl font-bold">{result.score}%</span>
                         </div>
                     </div>
 
@@ -256,18 +256,18 @@ const PopupApp: React.FC = () => {
                     <div className={`p-3 rounded-xl border flex items-center justify-between ${getRiskColor(result.risk_level)}`}>
                         <div className="flex items-center gap-2">
                             {getRiskIcon(result.risk_level)}
-                            <span className="text-xs font-black uppercase tracking-wider">Risk Level</span>
+                            <span className="text-xs font-bold ">Risk Level</span>
                         </div>
-                        <span className="text-sm font-black">{result.risk_level}</span>
+                        <span className="text-sm font-bold">{result.risk_level}</span>
                     </div>
 
                     {/* Key Signals */}
                     <div className="space-y-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Key Signals</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Key Signals</span>
                         <ul className="flex flex-col gap-1.5">
                             {result.signals.slice(0, 5).map((signal, i) => (
                                 <li key={i} className="text-[11px] font-medium text-slate-600 flex items-start gap-2 leading-tight">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 flex-shrink-0" />
                                     {signal}
                                 </li>
                             ))}

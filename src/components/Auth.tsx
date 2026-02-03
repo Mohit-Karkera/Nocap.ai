@@ -11,7 +11,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full space-y-4">
         <h1 className="text-2xl font-black text-slate-900">
-          NoCap<span className="text-indigo-600">.ai</span>
+          NoCap<span className="text-teal-600">.ai</span>
         </h1>
         <p className="text-slate-500 text-sm">
           Pick an agent name to start verifying news.
@@ -20,7 +20,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Enter a username"
-          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
         <button
           onClick={() => name.trim() && onLogin(name.trim())}
